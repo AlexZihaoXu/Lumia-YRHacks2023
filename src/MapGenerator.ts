@@ -1,5 +1,5 @@
-import {Assets} from './engine';
-import {LevelObject} from './content';
+import {AABBHitbox, Assets} from './engine';
+import {Door, LevelObject, Platform} from './content';
 
 export const MAP_TILE_SIZE = 16;
 export const MAP_GAP_SIZE = MAP_TILE_SIZE * 2;
@@ -142,7 +142,7 @@ export class MapGenerator {
         for (let i = 0; i < depth - 1; i++) {
             const top = this.rooms[i];
             const bottom = this.rooms[i + 1];
-            if (Math.random() > 1) {
+            if (Math.random() > 0.5) {
 
                 top.hasBottomright = false;
                 bottom.hasTopright = false;
@@ -173,6 +173,7 @@ export class MapGenerator {
                 room.width = 8 * MAP_TILE_SIZE;
                 room.height = MAP_DOOR_HEIGHT * 2 + MAP_GAP_SIZE;
                 this.rooms.push(room);
+
             } else {
                 top.hasBottomleft = false;
                 bottom.hasTopleft = false;
@@ -207,6 +208,51 @@ export class MapGenerator {
 
             this.generated = true;
         }
+
+        for (let room of this.rooms) {
+            if (room.type === 'room') {
+                if (!room.hasTopleft) this.levelObject.doors.push(new Door(room.x, room.y + MAP_TILE_SIZE));
+                if (!room.hasTopright) this.levelObject.doors.push(new Door(room.x + room.width - MAP_TILE_SIZE, room.y + MAP_TILE_SIZE));
+
+                if (!room.hasBottomleft) this.levelObject.doors.push(new Door(room.x, room.y - MAP_TILE_SIZE + room.height - 32));
+                if (!room.hasBottomright) this.levelObject.doors.push(new Door(room.x + room.width - MAP_TILE_SIZE, room.y - MAP_TILE_SIZE + room.height - 32));
+
+                this.genPlatforms(room);
+
+            }
+        }
     }
+
+    private genPlatforms(room: Room) {
+        const platforms = this.levelObject.platforms;
+        if (!room.hasTopleft) {
+            const len = Math.random() * 2 + 2;
+            for (let i = 0; i < len; i++) {
+                platforms.push(new Platform(room.x + MAP_TILE_SIZE + i * MAP_TILE_SIZE, room.y + MAP_TILE_SIZE * 3));
+            }
+        }
+        if (!room.hasTopright) {
+            const len = Math.random() * 2 + 2;
+            for (let i = 0; i < len; i++) {
+                platforms.push(new Platform(room.x - MAP_TILE_SIZE * 2 + room.width - i * MAP_TILE_SIZE, room.y + MAP_TILE_SIZE * 3));
+            }
+        }
+        const roomBox = new AABBHitbox(room.x + MAP_TILE_SIZE, room.y + MAP_TILE_SIZE, room.width - MAP_TILE_SIZE * 2, room.height - MAP_TILE_SIZE * 2);
+        for (let y = room.y + MAP_TILE_SIZE * 3; y <= room.y + room.height; y += MAP_TILE_SIZE * Math.floor(Math.random() + 3)) {
+            for (let x = room.x; x < room.x + room.width; x += MAP_TILE_SIZE * Math.floor(Math.random() * 3 + 4)) {
+                if (Math.random() > 0.5) {
+                    const len = Math.round(Math.random() * 3 + 4);
+                    for (let i = 0; i < len; i++) {
+                        const platform = new Platform(x, y);
+                        if (!platform.hitbox.intersection(roomBox)) break;
+                        platforms.push(platform);
+                        x += MAP_TILE_SIZE;
+                    }
+                    x += MAP_TILE_SIZE;
+                }
+            }
+        }
+    }
+
 
 }

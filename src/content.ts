@@ -1,4 +1,4 @@
-import {GameObject} from './engine';
+import {Assets, GameObject} from './engine';
 import {MAP_DOOR_HEIGHT, MAP_TILE_SIZE, MapGenerator} from './MapGenerator';
 import {Entity} from './entities';
 
@@ -29,9 +29,45 @@ export class HitboxObject extends GameObject {
     }
 }
 
+export class Door extends HitboxObject {
+    enableCollision = false;
+    showHitbox = false;
+
+    constructor(x: number, y: number) {
+        super(x, y, 16, 32);
+
+    }
+
+    async onDraw(now: number, dt: number): Promise<void> {
+        await super.onDraw(now, dt);
+        if (Math.floor(now / 3) % 2 == 0)
+            this.ctx.drawImage(await Assets.getImage('res/door-opened.png'), -6, 0);
+        else
+            this.ctx.drawImage(await Assets.getImage('res/door-closed.png'), 2, 0);
+
+    }
+}
+
+export class Platform extends HitboxObject {
+
+    showHitbox = false;
+
+    constructor(x: number, y: number) {
+        super(x, y, 16, 6);
+    }
+
+    async onDraw(now: number, dt: number): Promise<void> {
+        await super.onDraw(now, dt);
+        this.ctx.drawImage(await Assets.getImage('res/platform.png'), 0, 0);
+    }
+}
+
 export class LevelObject extends GameObject {
     generator = new MapGenerator(this);
     hitboxes: HitboxObject[] = [];
+    doors: Door[] = [];
+
+    platforms: Platform[] = [];
 
     public constructor() {
         super();
@@ -59,6 +95,14 @@ export class LevelObject extends GameObject {
 
             }
 
+        }
+
+        for (let door of this.doors) {
+            this.scene.addGameObject(door);
+        }
+
+        for (let platform of this.platforms) {
+            this.scene.addGameObject(platform);
         }
     }
 

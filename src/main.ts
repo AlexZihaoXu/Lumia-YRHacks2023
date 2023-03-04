@@ -72,7 +72,7 @@ class TestScene extends Scene {
         this.ctx.fillStyle = '#333';
         this.ctx.fillRect(0, 0, this.width, this.height);
         this.ctx.translate(this.width / 2, this.height / 2);
-        this.ctx.scale(4, 4);
+        this.ctx.scale(2, 2);
         this.ctx.translate(-this.camera.x, -this.camera.y);
 
 
