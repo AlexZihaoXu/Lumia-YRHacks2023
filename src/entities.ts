@@ -93,7 +93,7 @@ export class Player extends Entity {
         }
 
         if (this.input.getMouseButton(0)) {
-            if (now - this.lastFire > 0.03) {
+            if (now - this.lastFire > 0.25) {
                 this.lastFire = now;
                 const arrow = new Arrow();
                 arrow.x = this.hitbox.centerX + Math.cos(this.bow.direction) * 5 - 12;

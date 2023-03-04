@@ -1,6 +1,7 @@
 import {AABBHitbox, Assets, GameObject, Scene} from './engine';
 import {MAP_DOOR_HEIGHT, MAP_TILE_SIZE, MapGenerator, Room} from './MapGenerator';
 import {Entity, Player} from './entities';
+import {TailEffect} from './effects';
 
 export class HitboxObject extends GameObject {
     constructor(x: number, y: number, w: number, h: number) {
@@ -223,7 +224,6 @@ export class LevelObject extends GameObject {
             if (this.combatRoom && this.combatRoom.isClear) {
                 this.combatRoom = null;
                 this.unlock();
-                console.log('added');
                 this.scene.addGameObject(new TitleObject('CLEAR'));
             }
         }
@@ -256,6 +256,9 @@ export class LevelScene extends Scene {
         this.addGameObject(this.player);
         this.addGameObject(this.player.bow);
         this.addGameObject(new LevelObject(this.player));
+        const tail = new TailEffect(this.player, '#ffffff88');
+        tail.offset.set(0, 8)
+        this.addGameObject(tail);
 
     }
 

@@ -1,6 +1,7 @@
 import {Assets, GameObject, Vector2} from './engine';
 import {Enemy, Player} from './entities';
 import {HitboxObject, LevelScene} from './content';
+import {TailEffect} from './effects';
 
 export class Bow extends GameObject {
     constructor(public player: Player) {
@@ -35,6 +36,8 @@ export class Arrow extends GameObject {
     vel = new Vector2();
 
     bounceCount = 0;
+
+    // tail = new TailEffect(this, 'rgba(197,168,62,0.68)')
 
     constructor() {
         super();
