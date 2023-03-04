@@ -86,10 +86,17 @@ export class AABBHitbox {
     toString() {
         return `AABBHitbox{x=${this.x}, y=${this.y}, w=${this.w}, h=${this.height}}`;
     }
+
+    set(x: number, y: number, width: number, height: number) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+    }
 }
 
 export class Vector2 {
-    constructor(public x: number, public y: number) {
+    constructor(public x: number = 0, public y: number = 0) {
     }
 
     public static from(direction: number, magnitude: number) {
@@ -444,12 +451,24 @@ export class Scene {
         return this.game.ctx;
     }
 
+    get input() {
+        return this.game.input;
+    }
+
     public async onSetup() {
 
     }
 
     public async onCleanup() {
 
+    }
+
+    public addGameObject(object: GameObject) {
+        this.gameObjects.push(object);
+    }
+
+    public removeGameObject(object: GameObject) {
+        this.gameObjects.splice(this.gameObjects.indexOf(object), 1);
     }
 
     public async onUpdate(now: number, dt: number) {
@@ -461,6 +480,14 @@ export class Scene {
     public async onFixedUpdate(now: number, dt: number) {
         for (let object of this.gameObjects) {
             await object.onFixedUpdate(now, dt);
+            if (object.enableCollision) {
+                for (let other of this.gameObjects) {
+                    if (other.enableCollision)
+                        if (object.hitbox.intersection(other.hitbox)) {
+                            await object.onCollision(other);
+                        }
+                }
+            }
         }
     }
 
@@ -470,6 +497,7 @@ export class Scene {
         });
         for (let object of this.gameObjects) {
             this.ctx.save();
+            this.ctx.translate(object.x, object.y)
             await object.onDraw(now, dt);
             this.ctx.restore();
             if (object.showHitbox) {
@@ -497,7 +525,12 @@ export class GameObject {
 
     public zIndex = 0;
 
+    public enableCollision = false;
     public showHitbox = true;
+
+    get input() {
+        return this.game.input;
+    }
 
     public get x() {
         return this.hitbox.x - this.anchorPoint.x;
@@ -505,6 +538,14 @@ export class GameObject {
 
     public get y() {
         return this.hitbox.y - this.anchorPoint.y;
+    }
+
+    public set x(x) {
+        this.hitbox.x = x + this.anchorPoint.x
+    }
+
+    public set y(y) {
+        this.hitbox.y = y + this.anchorPoint.y
     }
 
     get game() {
@@ -517,6 +558,10 @@ export class GameObject {
 
     get ctx() {
         return this.game.ctx;
+    }
+
+
+    public async onCollision(other: GameObject) {
     }
 
     public async onDraw(now: number, dt: number) {
