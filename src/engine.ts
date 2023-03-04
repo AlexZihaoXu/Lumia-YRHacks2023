@@ -286,9 +286,9 @@ export class Input {
             if (ev.button >= 0 && ev.button < this.mouseButtons.length)
                 this.mouseButtons[ev.button] = false;
         });
-        window.addEventListener('mousemove', ev => {
-            this._mouseX = ev.clientX;
-            this._mouseY = ev.clientY;
+        window.addEventListener('pointermove', ev => {
+            this._mouseX = ev.x;
+            this._mouseY = ev.y;
         });
         window.addEventListener('keydown', ev => {
             // @ts-ignore
@@ -454,7 +454,8 @@ export class GameCanvas {
 
 export class Scene {
 
-    private gameObjects: GameObject[] = [];
+    protected gameObjects: GameObject[] = [];
+    private removeList: GameObject[] = [];
 
     get game() {
         return GameCanvas.getInstance();
@@ -481,7 +482,7 @@ export class Scene {
     }
 
     public removeGameObject(object: GameObject) {
-        this.gameObjects.splice(this.gameObjects.indexOf(object), 1);
+        this.removeList.push(object);
     }
 
     public async onUpdate(now: number, dt: number) {
@@ -491,6 +492,11 @@ export class Scene {
     }
 
     public async onFixedUpdate(now: number, dt: number) {
+        for (let object of this.removeList) {
+            const index = this.gameObjects.indexOf(object);
+            if (index !== -1)
+                this.gameObjects.splice(index, 1);
+        }
         for (let object of this.gameObjects) {
             await object.onFixedUpdate(now, dt);
             if (object.enableCollision) {
@@ -509,6 +515,7 @@ export class Scene {
             return a.zIndex - b.zIndex;
         });
         for (let object of this.gameObjects) {
+            if (object.zIndex > 10) continue;
             this.ctx.save();
             this.ctx.translate(object.x, object.y);
             await object.onDraw(now, dt);

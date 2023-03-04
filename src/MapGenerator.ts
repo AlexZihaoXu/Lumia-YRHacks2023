@@ -1,5 +1,6 @@
 import {AABBHitbox, Assets} from './engine';
 import {Door, LevelObject, Platform} from './content';
+import {Enemy, Slime} from './entities';
 
 export const MAP_TILE_SIZE = 16;
 export const MAP_GAP_SIZE = MAP_TILE_SIZE * 2;
@@ -12,11 +13,24 @@ export class Room {
     hasTopright = true;
     hasBottomleft = true;
     hasBottomright = true;
+    enemies: Enemy[] = [];
+    private cleared = false;
     public static generator: MapGenerator | null = null;
     public generator: MapGenerator | null = null;
     type: 'room' | 'hallway' | 'stairs' = 'room';
     private static canvas = document.createElement('canvas');
     private texture: HTMLImageElement | null = null;
+
+
+    get isClear() {
+        if (!this.cleared) {
+            for (let enemy of this.enemies) {
+                if (enemy.isAlive) return false;
+            }
+            this.cleared = true;
+        }
+        return true;
+    }
 
     public constructor(public x = 0, public y = 0) {
         this.width = Math.round(14 + 2 * Math.floor(Math.random() * 5));
@@ -25,6 +39,23 @@ export class Room {
         this.width *= MAP_TILE_SIZE;
         this.height *= MAP_TILE_SIZE;
         this.generator = Room.generator;
+    }
+
+    wakeup() {
+        for (let enemy of this.enemies) {
+            enemy.sleeping = false;
+        }
+    }
+
+    public spawnEnemies(levelObject: LevelObject) {
+        const count = Math.random() * 5 + 4;
+        for (let i = 0; i < count; i++) {
+            const slime = new Slime();
+            levelObject.scene.addGameObject(slime);
+            slime.x = this.x + MAP_TILE_SIZE + (this.width - MAP_TILE_SIZE * 2) * Math.random();
+            slime.y = this.y + MAP_TILE_SIZE + (this.height - MAP_TILE_SIZE * 2) * Math.random();
+            this.enemies.push(slime);
+        }
     }
 
     private isWall(x: number, y: number) {
