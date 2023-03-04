@@ -26,21 +26,26 @@ export class AABBHitbox {
 
     push(hitbox: AABBHitbox) {
         const area = this.intersection(hitbox);
-        if (area) {
+        if (area && area.width != area.height) {
             if (area.width > area.height) {
                 if (this.centerY < hitbox.centerY) {
                     hitbox.y = this.bottom;
+                    return 2;
                 } else {
                     hitbox.y = this.top - hitbox.height;
+                    return 0;
                 }
             } else {
                 if (this.centerX < hitbox.centerX) {
                     hitbox.x = this.right;
+                    return 1;
                 } else {
                     hitbox.x = this.left - hitbox.width;
+                    return 3;
                 }
             }
         }
+        return -1;
     }
 
     get left() {
@@ -123,6 +128,11 @@ export class Vector2 {
 
     copy() {
         return new Vector2(this.x, this.y);
+    }
+
+    set(x: number, y: number) {
+        this.x = x;
+        this.y = y;
     }
 }
 
@@ -371,8 +381,11 @@ export class GameCanvas {
     }
 
     public async onDraw(now: number, dt: number) {
+        this.ctx.imageSmoothingEnabled = false;
         if (this.scene) {
+            this.ctx.save();
             await this.scene.onDraw(now, dt);
+            this.ctx.restore();
         }
     }
 
@@ -497,7 +510,7 @@ export class Scene {
         });
         for (let object of this.gameObjects) {
             this.ctx.save();
-            this.ctx.translate(object.x, object.y)
+            this.ctx.translate(object.x, object.y);
             await object.onDraw(now, dt);
             this.ctx.restore();
             if (object.showHitbox) {
@@ -526,7 +539,7 @@ export class GameObject {
     public zIndex = 0;
 
     public enableCollision = false;
-    public showHitbox = true;
+    public showHitbox = false;
 
     get input() {
         return this.game.input;
@@ -541,11 +554,11 @@ export class GameObject {
     }
 
     public set x(x) {
-        this.hitbox.x = x + this.anchorPoint.x
+        this.hitbox.x = x + this.anchorPoint.x;
     }
 
     public set y(y) {
-        this.hitbox.y = y + this.anchorPoint.y
+        this.hitbox.y = y + this.anchorPoint.y;
     }
 
     get game() {
@@ -576,4 +589,30 @@ export class GameObject {
 
     }
 
+}
+
+export class Assets {
+    private static cacheImages = {};
+
+    public static async getImage(url: string) {
+        return new Promise<HTMLImageElement>(async resolve => {
+            // @ts-ignored
+            if (this.cacheImages[url] === undefined) {
+                const image = new Image();
+                image.src = url;
+                // @ts-ignored
+                this.cacheImages[url] = null;
+                image.onload = () => {
+                    // @ts-ignored
+                    this.cacheImages[url] = image;
+                    // @ts-ignored
+                    resolve(this.cacheImages[url]);
+                };
+            } else {
+                // @ts-ignored
+                resolve(this.cacheImages[url]);
+            }
+        });
+
+    }
 }
